@@ -1,3 +1,4 @@
-# IncidencePrevalence Calculations: Impact of approaches to defining denominator populations.
+# IncPrev: 
+Impact of approaches to defining denominator populations.
 
 
