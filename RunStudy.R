@@ -6,7 +6,7 @@ if (!dir.exists(output_folder)) {
 
 
 #Instantiate cohorts for characterisation
-source(here("1_InstantiateCohorts", "inst.R"))
+source(here("1_InstantiateConcepts", "inst.R"))
 
 #Create denominator
 prior_obs <- prior_years*365
@@ -33,10 +33,10 @@ for (i in prior_obs){
     filter(cohort_definition_id==id) %>%
     summariseCharacteristics(
       cohortIntersectFlag = list(
-        #   "Conditions prior to index date" = list(
-        #    targetCohortTable = "conditions",
-        #   window = c(-Inf, -1)
-        #  ),
+           "Conditions prior to index date" = list(
+            targetCohortTable = "conditions",
+           window = c(-Inf, -1)
+          ),
         "Medications prior to index date" = list(
           targetCohortTable = "medications",
           window = c(-Inf, -1)
@@ -49,10 +49,10 @@ for (i in prior_obs){
         )
       ),
       tableIntersectFlag = list(
-        #  "Any condition occurrence in the year prior" = list(
-        #     tableName = "condition_occurrence",
-        #    window = c(-365, -1)
-        #  ),
+          "Any condition during prior obs assessed" = list(
+             tableName = "condition_occurrence",
+            window = c(-365, -1)
+          ),
         "Any drug exposure during prior obs assessed" = list(
           tableName = "drug_exposure",
           window = c(-i, -1)
@@ -135,4 +135,4 @@ plot_cond <- results |>
 write.csv(table_results, file = here(output_folder, paste0("characteristics_", cdmName(cdm), ".csv")))
 write.csv(table_lsc, file = here(output_folder, paste0("LSC_", cdmName(cdm), ".csv")))
 ggsave(plot=plot_med, filename= paste0("prior_medication_", cdmName(cdm), ".jpeg"), path= here(output_folder))
-#ggsave(plot=plot_cond, filename= paste0("prior_conditions_", cdmName(cdm), ".jpeg"), path= here(output_folder))
+ggsave(plot=plot_cond, filename= paste0("prior_conditions_", cdmName(cdm), ".jpeg"), path= here(output_folder))

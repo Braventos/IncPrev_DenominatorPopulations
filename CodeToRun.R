@@ -17,6 +17,8 @@ library(readr)
 library(DBI)
 library(RPostgres)
 library(duckdb)
+library(CohortConstructor)
+library(omopgenerics)
 # Connection details
 database_name <- "..."
 server_dbi <- Sys.getenv("...")
@@ -49,8 +51,8 @@ cdm <- cdmFromCon(
 
 # Eunomia
 #con <- dbConnect(duckdb(), dbdir = eunomiaDir())
-#cdm <- cdmFromCon(
-#  con = con, cdmSchem = "main", writeSchema = "main", cdmName = "Eunomia")
+cdm <- cdmFromCon(
+  con = con, cdmSchem = "main", writeSchema = "main", cdmName = "Eunomia")
 
 
 # output folder
