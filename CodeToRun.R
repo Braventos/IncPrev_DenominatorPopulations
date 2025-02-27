@@ -19,6 +19,8 @@ library(RPostgres)
 library(duckdb)
 library(CohortConstructor)
 library(omopgenerics)
+library(purrr)
+
 # Connection details
 database_name <- "..."
 server_dbi <- Sys.getenv("...")
@@ -50,7 +52,7 @@ cdm <- cdmFromCon(
 
 
 # Eunomia
-#con <- dbConnect(duckdb(), dbdir = eunomiaDir())
+con <- dbConnect(duckdb(), dbdir = eunomiaDir())
 cdm <- cdmFromCon(
   con = con, cdmSchem = "main", writeSchema = "main", cdmName = "Eunomia")
 
@@ -58,10 +60,10 @@ cdm <- cdmFromCon(
 # output folder
 results_output<- paste0("Results_", cdmName(cdm))
 
-# Prior observation to explore (in years)
-prior_years <- c(seq(1,5,1))
+# Prior observation to explore (in days)
+prior_obs <- c(180,365,730)
 
 # Execute code
-source(here("RunStudy.R"))
+source(here("R", "RunStudy.R"))
 
 print(paste0("Thanks for running the analysis. Results should be available in the folder: ", results_output))
