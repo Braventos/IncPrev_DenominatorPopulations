@@ -1,0 +1,138 @@
+#Output
+output_folder <- here(results_output)
+if (!dir.exists(output_folder)) {
+  dir.create(output_folder)
+}
+
+
+#Instantiate cohorts for characterisation
+#source(here("1_InstantiateConcepts", "inst.R"))
+
+#Create denominator
+prior_obs <- prior_years*365
+cdm <- generateDenominatorCohortSet(cdm=cdm,
+                                    name = "denominator",
+                                    cohortDateRange = as.Date(c("2019-01-01", "2019-12-31")),
+                                    ageGroup = list(c(0, 150)),
+                                    sex = "Both",
+                                    daysPriorObservation =prior_obs,
+                                    requirementInteractions = FALSE)
+
+
+
+# Charactirisation of pop. included
+data<-list()      
+lsc<-list()   
+
+for (i in prior_obs){
+  id <- settings(cdm$denominator)%>%
+    filter(days_prior_observation==i)%>%
+    select(cohort_definition_id)%>%
+    pull()
+  data[[paste0("days_",i)]] <-cdm$denominator %>%
+    filter(cohort_definition_id==id) %>%
+    summariseCharacteristics(
+      cohortIntersectFlag = list(
+           "Conditions prior to index date" = list(
+            targetCohortTable = "conditions",
+           window = c(-Inf, -1)
+          ),
+        "Medications prior to index date" = list(
+          targetCohortTable = "medications",
+          window = c(-Inf, -1)
+        )
+      ),
+      tableIntersectCount = list(
+        "Visits during prior obs" = list(
+          tableName = "visit_occurrence",
+          window = c(-i, -1)
+        )
+      ),
+      tableIntersectFlag = list(
+          "Any condition during prior obs assessed" = list(
+             tableName = "condition_occurrence",
+            window = c(-365, -1)
+          ),
+        "Any drug exposure during prior obs assessed" = list(
+          tableName = "drug_exposure",
+          window = c(-i, -1)
+        ),
+        "Any visit  during prior obs assessed" = list(
+          tableName = "visit_occurrence",
+          window = c(-i, -1)
+        ),
+        "Any procedure during prior obs assessed" = list(
+          tableName = "procedure_occurrence",
+          window = c(-i, -1)
+        )
+      ) 
+    ) %>%
+    mutate(group_level=paste0("days_",i))
+  
+  lsc[[paste0("days_",i)]] <- cdm$denominator %>%
+    filter(cohort_definition_id==id) %>%
+    summariseLargeScaleCharacteristics(
+      window = list(c(-Inf, -1)),
+      eventInWindow = c(
+        "condition_occurrence"
+      ),
+      episodeInWindow = "drug_exposure",
+      minimumFrequency = 0.1
+    )%>%
+    mutate(group_level=paste0("days_",i))
+  
+
+  
+}
+
+results<-bind_rows(data)
+table_results<-tableCharacteristics(results)
+
+lsc_results<-bind_rows(lsc)
+table_lsc<-tableLargeScaleCharacteristics(lsc_results)
+
+
+#Output
+plot_med <- results |>
+  filter(
+    variable_name == "Medications prior to index date",
+    estimate_name == "percentage") |>
+  plotCharacteristics(
+    plotType = "barplot",
+    colour = "variable_level",
+    facet = c("cdm_name", "cohort_name")
+  ) +
+  scale_x_discrete(limits = rev(sort(unique(results %>%
+                                              filter(variable_name == "Medications prior to index date")%>%
+                                              select(variable_level)%>%
+                                              distinct()%>%
+                                              pull()))))+
+  coord_flip() +
+  theme(legend.position = "none")+
+  ggtitle("Medication prior to index date")
+
+
+plot_cond <- results |>
+  filter(
+    variable_name == "Conditions prior to index date",
+    estimate_name == "percentage") |>
+  plotCharacteristics(
+    plotType = "barplot",
+    colour = "variable_level",
+    facet = c("cdm_name", "cohort_name")
+  ) +
+  scale_x_discrete(limits = rev(sort(unique(results %>%
+                                              filter(variable_name == "Conditions prior to index date")%>%
+                                              select(variable_level)%>%
+                                              distinct()%>%
+                                              pull()))))+
+  coord_flip() +
+  theme(legend.position = "none")+
+  ggtitle("Conditions prior to index date")
+
+
+##Export
+write.csv(table_results, file = here(output_folder, paste0("characteristics_", cdmName(cdm), ".csv")))
+write.csv(table_lsc, file = here(output_folder, paste0("LSC_", cdmName(cdm), ".csv")))
+ggsave(plot=plot_med, filename= paste0("prior_medication_", cdmName(cdm), ".jpeg"), path= here(output_folder))
+ggsave(plot=plot_cond, filename= paste0("prior_conditions_", cdmName(cdm), ".jpeg"), path= here(output_folder))

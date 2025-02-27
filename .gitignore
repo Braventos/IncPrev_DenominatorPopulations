@@ -3,8 +3,8 @@ Results_Eunomia/
 .DS_Store
 /1_InstantiateCohorts/Cohorts/.DS_Store
 /1_InstantiateCohorts/.DS_Store
-.Rproj.user
-/.RData
-/.Rhistory
-/.gitattributes
-/.gitignore
+Rproj.user
+RData
+Rhistory
+gitattributes
+.gitignore
