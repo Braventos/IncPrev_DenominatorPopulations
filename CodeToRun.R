@@ -52,16 +52,16 @@ cdm <- cdmFromCon(
 
 
 # Eunomia
-con <- dbConnect(duckdb(), dbdir = eunomiaDir())
-cdm <- cdmFromCon(
-  con = con, cdmSchem = "main", writeSchema = "main", cdmName = "Eunomia")
+# con <- dbConnect(duckdb(), dbdir = eunomiaDir())
+# cdm <- cdmFromCon(
+#   con = con, cdmSchem = "main", writeSchema = "main", cdmName = "Eunomia")
 
 
 # output folder
 results_output<- paste0("Results_", cdmName(cdm))
 
 # Prior observation to explore (in days)
-prior_obs <- c(180,365,730)
+prior_obs <- c(0,365,730)
 
 # Execute code
 source(here("R", "RunStudy.R"))

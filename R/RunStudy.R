@@ -14,26 +14,38 @@ cdm <- generateDenominatorCohortSet(cdm=cdm,
                                     cohortDateRange = as.Date(c("2019-01-01", "2019-12-31")),
                                     ageGroup = list(c(0, 150)),
                                     sex = "Both",
-                                    daysPriorObservation = c(0,prior_obs),
+                                    daysPriorObservation = prior_obs,
                                     requirementInteractions = FALSE)
 
 
 # Characterisation of pop. excluded (ref: denominator with daysPriorObservation=0)
-patientsExcluded<-list()      
+noObs_id <- settings(cdm$denominator)%>%
+  filter(days_prior_observation=="0")%>%
+  select(cohort_definition_id)%>%
+  pull()
+
+patientsCharacteristics<-list()   
 
 for (i in prior_obs){
   id <- settings(cdm$denominator)%>%
     filter(days_prior_observation==i)%>%
     select(cohort_definition_id)%>%
     pull()
-  noObs_id <- settings(cdm$denominator)%>%
-    filter(days_prior_observation=="0")%>%
-    select(cohort_definition_id)%>%
-    pull()
-  patientsExcluded[[paste0(i,"_days")]] <-cdm$denominator %>%
-    filter(cohort_definition_id==noObs_id) %>%
-    anti_join(cdm$denominator %>%
-                filter(cohort_definition_id==id))%>%
+ 
+  if (id == noObs_id) {  #Patients included when priorObs=0
+    patients <-cdm$denominator %>%
+      filter(cohort_definition_id==noObs_id) 
+  }else{  #Patients excluded when priorObs!=0 (comparator pop priorObs=0)
+    patients <-cdm$denominator %>%
+      filter(cohort_definition_id==noObs_id)  %>%
+      anti_join(cdm$denominator %>%
+                  filter(cohort_definition_id==id), by = "subject_id")
+  }
+ 
+  ###Add this if rows >1
+  n <- patients%>%tally()%>%pull()
+  if(n >0){
+  patientsCharacteristics[[paste0(i,"_days")]] <-patients%>%
     summariseCharacteristics(
       tableIntersectCount = list(
           "Conditions during prior history" = list(
@@ -54,17 +66,18 @@ for (i in prior_obs){
         )
       ) 
     ) %>%
-    mutate(group_level=paste0(i, " days of prior observation"))
+  mutate(group_level= case_when(id == noObs_id ~ paste0(i, "d prior observation"),
+                              id != noObs_id ~ paste0(i, "d prior observation")))
+  }
 }
 
-resultsExcluded<-bind_rows(patientsExcluded)
-tableExcluded<-tableCharacteristics(resultsExcluded)
+results <-bind_rows(patientsCharacteristics)
+table <-tableCharacteristics(results)
 
 dbDisconnect(db)
 
 ##Export
-write.csv(tableExcluded, file = here(output_folder, paste0("Characteristics_Patients_Excluded_", cdmName(cdm), ".csv")))
-
+write.csv(table, file = here(output_folder, paste0("Characteristics_Patients_", cdmName(cdm), ".csv")))
 toPlot <- c("Conditions during prior history", "Drug exposures during prior history", 
             "Visits during prior history", "Procedures during prior history")
-walk(toPlot, ~ plot_priorRecords(data = resultsExcluded, variable = .x))
+walk(toPlot, ~ plot_priorRecords(data = results, variable = .x))
