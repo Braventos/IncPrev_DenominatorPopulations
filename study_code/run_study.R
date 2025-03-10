@@ -33,7 +33,7 @@ cli::cli_inform("Running analysis for age group: {working_age_group}, sex: {work
 cli::cli_inform("- Getting reference denominator cohort (zero day requirement)")
 cdm <- generateDenominatorCohortSet(cdm=cdm,
                                     name = "denominator_0_days",
-                                    cohortDateRange = as.Date(c("2019-01-01", "2019-12-31")),
+                                    cohortDateRange = as.Date(c("2019-01-01", "2019-01-01")),
                                     ageGroup = working_age_group,
                                     sex = working_sex,
                                     daysPriorObservation = 0)
@@ -61,7 +61,7 @@ excluded_name <- paste0("excluded - ",
 cli::cli_inform("- Getting cohort with {working_prior_obs_req} days prior observation")
 cdm <- generateDenominatorCohortSet(cdm=cdm,
                                     name = "denominator_days_required",
-                                    cohortDateRange = as.Date(c("2019-01-01", "2019-12-31")),
+                                    cohortDateRange = as.Date(c("2019-01-01", "2019-01-01")),
                                     ageGroup = working_age_group,
                                     sex = working_sex,
                                     daysPriorObservation = working_prior_obs_req)

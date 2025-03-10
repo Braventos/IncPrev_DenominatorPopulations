@@ -12,3 +12,5 @@ gitattributes
 reporting/data/results_Eunomia_2025_03_10.csv
 study_code/code_to_run_local.R
 study_code/results/results_Eunomia_2025_03_10.csv
+reporting/data/results_CPRD GOLD_2025_03_10.csv
+study_code/results/results_CPRD GOLD_2025_03_10.csv
