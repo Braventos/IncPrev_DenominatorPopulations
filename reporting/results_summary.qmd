@@ -17,7 +17,8 @@ library(gt)
 results <- importSummarisedResult(here("data"))
 ```
 
-## Plot number included 
+## Plot number included
+
 ```{r, echo=FALSE, warning = FALSE, message=FALSE}
 # plot counts of included
 plot_data <- results |>
@@ -26,7 +27,7 @@ plot_data <- results |>
   filter(stringr::str_detect(cohort_name, "included")) |>
   mutate(days_required = as.numeric(stringr::str_extract(cohort_name, "\\d+"))) |>
   tidyr::separate(col = "cohort_name",
-                  into = c("name", "age_group", "sex"), sep = ";")
+                  into = c("name", "age_group", "sex", "year"), sep = ";")
 # add proportional change
 plot_data <- plot_data |>
   left_join(plot_data |>
@@ -38,9 +39,9 @@ plot_data <- plot_data |>
   mutate(change_prop = ((start_count - count)/  start_count) *100)
 ```
 
-
 ```{r, fig.width = 10, fig.height= 7, echo=FALSE, warning = FALSE, message=FALSE}
 plot_data |>
+  filter(year==" year 2019-01-01") |>
   ggplot() +
   geom_point(aes(days_required, count,
                  colour = cdm_name)) +
@@ -54,8 +55,10 @@ plot_data |>
 ```
 
 ## Plot percentage dropped
+
 ```{r, fig.width = 10, fig.height= 7, echo=FALSE, warning = FALSE, message=FALSE}
 plot_data |>
+  filter(year==" year 2019-01-01") |>
   ggplot() +
   geom_point(aes(days_required, change_prop,
                  colour = cdm_name)) +
@@ -68,12 +71,12 @@ plot_data |>
   ylab("Percentage dropped")
 ```
 
-
 ## Compare characteristics
+
 ```{r, echo=FALSE, warning = FALSE, message=FALSE}
 chars_tbl <- tableCharacteristics(results |>
                        filter(str_detect(group_level,
-                                         "age 0 to 150; sex Both")) |>
+                                         "age 0 to 150; sex Both; year 2019-01-01")) |>
                        filter(str_detect(group_level,
                                            "30 days",
                                          negate = TRUE)) |>
@@ -88,5 +91,3 @@ chars_tbl <- tableCharacteristics(results |>
 
 chars_tbl
 ```
-
-

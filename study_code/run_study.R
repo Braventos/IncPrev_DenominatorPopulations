@@ -3,11 +3,13 @@
 prior_obs <- c(0, 30, 90, 180, 
                365, 730, 1095)
 age_groups <- list(c(0, 150),
-                   c(0, 17),
-                   c(18, 65),
-                   c(66, 100))
+                   c(0, 9),
+                   c(10, 19),
+                   c(20, 39),
+                   c(49, 69),
+                   c(70, 100))
 sex <- c("Both", "Male", "Female")
-
+study_periods <- c("2017", "2019", "2021")
 
 # analysis -----
 results <- list()
@@ -23,17 +25,19 @@ results[["snapshot"]] <- summariseOmopSnapshot(cdm = cdm)
 
 for(j in seq_along(age_groups)){
 for(k in seq_along(sex)) {
+for(z in seq_along(study_periods)) {
 
 working_age_group <- age_groups[j]
 working_sex <- sex[k]
+working_period <- paste0(study_periods[z], "-01-01")
 
-cli::cli_inform("Running analysis for age group: {working_age_group}, sex: {working_sex}")
+cli::cli_inform("Running analysis for age group: {working_age_group}, sex: {working_sex}, study_period: {working_period}")
 
 # reference denominator - zero days prior obs requirement
 cli::cli_inform("- Getting reference denominator cohort (zero day requirement)")
 cdm <- generateDenominatorCohortSet(cdm=cdm,
                                     name = "denominator_0_days",
-                                    cohortDateRange = as.Date(c("2019-01-01", "2019-01-01")),
+                                    cohortDateRange = as.Date(c(working_period, working_period)),
                                     ageGroup = working_age_group,
                                     sex = working_sex,
                                     daysPriorObservation = 0)
@@ -46,7 +50,9 @@ included_name <- paste0("included - ",
                         " to ",
                         working_age_group[[1]][2],
                         "; sex ",
-                        working_sex
+                        working_sex,
+                        "; year ",
+                        working_period
                         )
 excluded_name <- paste0("excluded - ", 
                         working_prior_obs_req, 
@@ -55,13 +61,15 @@ excluded_name <- paste0("excluded - ",
                         " to ",
                         working_age_group[[1]][2],
                         "; sex ",
-                        working_sex
+                        working_sex,
+                        "; year ",
+                        working_period
 )
 
 cli::cli_inform("- Getting cohort with {working_prior_obs_req} days prior observation")
 cdm <- generateDenominatorCohortSet(cdm=cdm,
                                     name = "denominator_days_required",
-                                    cohortDateRange = as.Date(c("2019-01-01", "2019-01-01")),
+                                    cohortDateRange = as.Date(c(working_period, working_period)),
                                     ageGroup = working_age_group,
                                     sex = working_sex,
                                     daysPriorObservation = working_prior_obs_req)
@@ -93,7 +101,7 @@ chars_included <- cdm$denominator_0_days |>
                                )
                              ) 
                            )  
-results[[paste0("included_", i, "_", j, "_", k)]] <- chars_included |> 
+results[[paste0("included_", i, "_", j, "_", k, "_", z)]] <- chars_included |> 
   mutate(group_level = included_name)
 
 if(working_prior_obs_req != 0){
@@ -123,9 +131,9 @@ chars_excluded <- cdm$denominator_0_days |>
                                window = c(-Inf, -1)
                              )
                            ))   
-results[[paste0("excluded_", i, "_", j, "_", k)]] <- chars_excluded |> 
+results[[paste0("excluded_", i, "_", j, "_", k, "_", z)]] <- chars_excluded |> 
   mutate(group_level = excluded_name)
-}}}}
+}}}}}
 
 results <- bind(results)
 
